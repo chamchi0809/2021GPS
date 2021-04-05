@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Net;
 using System.Net.Sockets;
@@ -24,10 +24,10 @@ public class SocketSampleUDP : MonoBehaviour
     {
         SelectHost = 0,
         CreateListener,
-        ReceiveMessage,        
-        SendMessage,        
+        ReceiveMessage,
+        SendMessage,
     }
-
+    public Transform player;
 
     // Use this for initialization
     void Start()
@@ -54,7 +54,9 @@ public class SocketSampleUDP : MonoBehaviour
                 break;
 
             case State.SendMessage:
-                SendMessage(new Vector3(1,2,3));
+                Vector2 moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+                player.position += new Vector3(moveInput.x, moveInput.y).normalized * 5 * Time.deltaTime;
+                SendMessage(player.position);
                 break;
 
             default:
@@ -91,7 +93,8 @@ public class SocketSampleUDP : MonoBehaviour
                 value.x = BitConverter.ToSingle(buffer, 0);
                 value.y = BitConverter.ToSingle(buffer, 4);
                 value.z = BitConverter.ToSingle(buffer, 8);
-                Debug.Log(value);                
+                Debug.Log(value);
+                player.position = value;
             }
         }
     }
@@ -105,7 +108,7 @@ public class SocketSampleUDP : MonoBehaviour
             m_socket.Close();
             m_socket = null;
         }
-        
+
 
         Debug.Log("[UDP]End communication.");
     }
@@ -116,7 +119,7 @@ public class SocketSampleUDP : MonoBehaviour
         Debug.Log("[UDP]Start communication.");
 
         // 서버에 접속.
-        m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        
 
         // 메시지 송신.
         byte[] buffer = new byte[12];
@@ -125,14 +128,6 @@ public class SocketSampleUDP : MonoBehaviour
         Buffer.BlockCopy(BitConverter.GetBytes(value.z), 0, buffer, 8, 4);
         IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(m_address), m_port);
         m_socket.SendTo(buffer, buffer.Length, SocketFlags.None, endpoint);
-
-
-        // 접속 종료.
-        m_socket.Shutdown(SocketShutdown.Both);
-        m_socket.Close();
-        
-
-        Debug.Log("[UDP]End communication.");
     }
 
 
@@ -156,6 +151,7 @@ public class SocketSampleUDP : MonoBehaviour
         if (GUI.Button(new Rect(20, 70, 150, 20), "Connect to server"))
         {
             m_state = State.SendMessage;
+            m_socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         }
     }
 }
