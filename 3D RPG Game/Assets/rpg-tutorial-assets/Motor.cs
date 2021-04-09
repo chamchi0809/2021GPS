@@ -8,22 +8,25 @@ public class Motor : MonoBehaviour
     Transform target;
     NavMeshAgent agent;
 
-
+    Animator anim;
+    const float locomotionAnimationSmoothTime = .1f;
 
     // Start is called before the first frame update
     void Start()
     {
+        anim = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        float speedPercent = agent.velocity.magnitude / agent.speed;
+        anim.SetFloat("speedPercent", speedPercent, locomotionAnimationSmoothTime, Time.deltaTime);
         if(target != null)
         {
             agent.SetDestination(target.position);
             FaceTarget();
-            print("as");
         }
     }
     
@@ -34,11 +37,26 @@ public class Motor : MonoBehaviour
             direction.x, 0f, direction.z
             ));
         transform.rotation = Quaternion.Slerp(transform.rotation, lookedRotation,
-            Time.deltaTime * 500f);
+            Time.deltaTime * 15f);
     }
 
     public void MoveToPoint(Vector3 point)
     {
         agent.SetDestination(point);
+    }
+
+    public void FollowTarget(IT newTarget)
+    {
+        agent.stoppingDistance = newTarget.radius;
+        agent.updateRotation = false;
+        target = newTarget.interactionTransform;
+    }
+
+    public void StopFollowing()
+    {
+        agent.stoppingDistance = 0;
+        agent.updateRotation = true;
+
+        target = null;
     }
 }
